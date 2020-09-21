@@ -4,11 +4,33 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
-client.on("message", async (message) => {
+function shouldFilter(message) {
   const bannedWords = process.env.BANNED_WORDS.split(",").map((word) =>
     word.toLocaleLowerCase().trim()
   );
 
+  for (const word of bannedWords) {
+    if (message.content.toLowerCase().includes(word)) {
+      return true;
+    }
+  }
+
+  for (embed of message.embeds) {
+    for (const word of bannedWords) {
+      console.log(`title: ${embed.title}, description: ${embed.description}`);
+      if (
+        embed.title.toLocaleLowerCase().includes(word) ||
+        embed.description.toLocaleLowerCase().includes(word)
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+client.on("message", async (message) => {
   const restrictedUsers = process.env.RESTRICTED_USERS.split(",").map((user) =>
     user.toLocaleLowerCase().trim()
   );
@@ -19,11 +41,8 @@ client.on("message", async (message) => {
 
   // Check if the message contains any banned words
   // if so delete it.
-  for (const word of bannedWords) {
-    if (message.content.toLowerCase().includes(word)) {
-      await message.delete();
-      break;
-    }
+  if (shouldFilter(message)) {
+    await message.delete();
   }
 });
 
