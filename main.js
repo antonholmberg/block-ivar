@@ -6,7 +6,7 @@ client.on("ready", () => {
 
 function shouldFilter(message) {
   const bannedWords = process.env.BANNED_WORDS.split(",").map((word) =>
-    word.toLocaleLowerCase().trim()
+    word.toLowerCase().trim()
   );
 
   for (const word of bannedWords) {
@@ -17,10 +17,9 @@ function shouldFilter(message) {
 
   for (embed of message.embeds) {
     for (const word of bannedWords) {
-      console.log(`title: ${embed.title}, description: ${embed.description}`);
       if (
-        embed.title.toLocaleLowerCase().includes(word) ||
-        embed.description.toLocaleLowerCase().includes(word)
+        embed.title.toLowerCase().includes(word) ||
+        embed.description.toLowerCase().includes(word)
       ) {
         return true;
       }
@@ -30,12 +29,12 @@ function shouldFilter(message) {
   return false;
 }
 
-client.on("message", async (message) => {
+async function handleMessage(message) {
   const restrictedUsers = process.env.RESTRICTED_USERS.split(",").map((user) =>
-    user.toLocaleLowerCase().trim()
+    user.toLowerCase().trim()
   );
   // If the author is not restricted abort.
-  if (!restrictedUsers.includes(message.author.username.toLocaleLowerCase())) {
+  if (!restrictedUsers.includes(message.author.username.toLowerCase())) {
     return;
   }
 
@@ -44,6 +43,11 @@ client.on("message", async (message) => {
   if (shouldFilter(message)) {
     await message.delete();
   }
-});
+}
+
+client.on("message", handleMessage);
+client.on("messageUpdate", (_oldMessage, newMessage) =>
+  handleMessage(newMessage)
+);
 
 client.login(process.env.DISCORD_API_KEY);
